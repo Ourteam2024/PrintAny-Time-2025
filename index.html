@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الطباعة عبر الويب</title>
+  <style>
+    /* التصميم العام */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f9;
+      color: #333;
+      text-align: center;
+      background-image: url('sim.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin: 0;
+      padding: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    header {
+      background-color: rgba(44, 62, 80, 0.8);
+      padding: 30px 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    section {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 1.8em;
+      margin-bottom: 15px;
+      color: #34495e;
+    }
+
+    input[type="file"], textarea {
+      width: 80%;
+      padding: 12px;
+      margin: 15px 0;
+      border: 1px solid #bdc3c7;
+      border-radius: 8px;
+      font-size: 1em;
+      color: #333;
+      background-color: #ecf0f1;
+    }
+
+    button {
+      background-color: #3498db;
+      color: #fff;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    #statusMessage {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #e74c3c;
+    }
+
+    /* تخصيص التصميم للأجهزة المحمولة */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2em;
+      }
+
+      section {
+        padding: 20px;
+      }
+
+      input[type="file"], textarea {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+        font-size: 1em;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>طباعة الملفات أو النصوص عبر الويب</h1>
+  </header>
+
+  <section>
+    <h2>تحميل ملف للطباعة</h2>
+    <input type="file" id="fileInput" accept=".txt,.png,.jpg,.jpeg,.pdf">
+    <button onclick="uploadFile()">إرسال للطباعة</button>
+
+    <h2>أو أدخل نصًا للطباعة</h2>
+    <textarea id="textInput" rows="5" placeholder="أدخل النص هنا..."></textarea>
+    <button onclick="sendText()">طباعة النص</button>
+
+    <p id="statusMessage"></p>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <script>
+    // دالة لتحميل الملف وطباعته باستخدام PrintNode API
+    function uploadFile() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) {
+        document.getElementById('statusMessage').textContent = 'يرجى اختيار ملف أولاً.';
+        return;
+      }
+
+      const fileType = file.type;
+
+      // إذا كان الملف نصيًا
+      if (fileType.includes("text")) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileContent = e.target.result;
+          sendToPrintNode(fileContent);  // إرسال الملف للطباعة عبر PrintNode
+        };
+        reader.readAsText(file);
+      }
+      // إذا كان الملف صورة
+      else if (fileType.includes("image")) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileContent = e.target.result;
+          sendToPrintNode(fileContent);  // إرسال الصورة للطباعة عبر PrintNode
+        };
+        reader.readAsDataURL(file);
+      }
+      // إذا كان الملف PDF
+      else if (fileType === "application/pdf") {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileContent = e.target.result;
+          sendToPrintNode(fileContent);  // إرسال PDF للطباعة عبر PrintNode
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        document.getElementById('statusMessage').textContent = 'نوع الملف غير مدعوم للطباعة.';
+      }
+    }
+
+    // دالة لإرسال النص للطباعة
+    function sendText() {
+      const text = document.getElementById('textInput').value.trim();
+      if (!text) {
+        document.getElementById('statusMessage').textContent = 'يرجى إدخال نص للطباعة.';
+        return;
+      }
+
+      sendToPrintNode(text);  // إرسال النص للطباعة عبر PrintNode
+    }
+
+    // دالة لإرسال البيانات إلى PrintNode للطباعة
+    function sendToPrintNode(content) {
+      const apiKey = 'Ro-pnxDgKPnBs0uEfWd9o0meYxEaEYED4oIGuuxpi6A';  // ضع هنا API Key الخاص بـ PrintNode
+      const printerId = '73959733';  // ضع هنا ID للطابعة التي تريد استخدامها
+
+      const data = {
+        printer: printerId,
+        content: content,
+        contentType: 'raw',  // تحديد نوع المحتوى
+        encoding: 'utf-8'
+      };
+
+      // إرسال البيانات إلى PrintNode
+      fetch('https://api.printnode.com/printjobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(apiKey + ':')  // استخدام Basic Authentication مع API Key
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById('statusMessage').textContent = 'حدث خطأ أثناء إرسال الطلب للطابعة.';
+        } else {
+          document.getElementById('statusMessage').textContent = 'تم إرسال الملف للطابعة بنجاح!';
+        }
+      })
+      .catch(error => {
+        document.getElementById('statusMessage').textContent = 'حدث خطأ في الاتصال مع PrintNode.';
+      });
+    }
+  </script>
+
+</body>
+</html>
